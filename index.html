@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Economics Graph Gallery</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7fb;
+      --card-bg: #ffffff;
+      --accent: #3a7afe;
+      --accent-soft: rgba(58, 122, 254, 0.12);
+      --text: #1d2340;
+      --muted: #5c6784;
+      --border: #d8def0;
+      --shadow: 0 20px 40px rgba(29, 35, 64, 0.08);
+      --radius-lg: 24px;
+      --radius-md: 16px;
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.65)), url('assets/images/background.png');
+      background-size: auto, cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    header {
+      padding: 5.5rem 1.5rem 1.75rem;
+      text-align: center;
+    }
+
+    .site-subtitle {
+      display: block;
+      font-size: clamp(1.1rem, 3vw, 1.3rem);
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.6rem;
+    }
+
+    .site-title {
+      margin: 0;
+      font-size: clamp(2.6rem, 6.5vw, 3.8rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+
+    header p {
+      margin: 1.25rem auto 0;
+      max-width: 52ch;
+      color: #111111;
+      font-size: 1.05rem;
+      line-height: 1.6;
+    }
+
+    .hero-link {
+      color: var(--accent);
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .hero-link:hover,
+    .hero-link:focus-visible {
+      text-decoration: underline;
+    }
+
+    main {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 1.5rem 4rem;
+    }
+
+    .collection {
+      display: grid;
+      gap: 1.75rem;
+    }
+
+    .category {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .category h2 {
+      margin: 0;
+      font-size: 1.3rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    .button-grid {
+      display: grid;
+      gap: 1.5rem;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .graph-btn {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 0.75rem;
+      height: 150px;
+      padding: 1.8rem 1.9rem;
+      border-radius: var(--radius-md);
+      border: 0;
+      background: #ffffff;
+      color: inherit;
+      text-decoration: none;
+      transition: transform 160ms ease, box-shadow 160ms ease;
+      box-shadow: 0 10px 24px rgba(29, 35, 64, 0.08);
+      cursor: pointer;
+    }
+
+    .graph-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    .graph-summary {
+      font-size: 0.9rem;
+      color: var(--muted);
+      line-height: 1.5;
+      font-weight: 500;
+    }
+
+    .graph-btn:hover,
+    .graph-btn:focus-visible {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 34px rgba(29, 35, 64, 0.14);
+    }
+
+    .load-status,
+    .load-error,
+    .empty-state {
+      margin: 2.5rem auto;
+      max-width: 40ch;
+      text-align: center;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    #detail-view {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 1.5rem 4rem;
+    }
+
+    .detail-surface {
+      background: rgba(255, 255, 255, 0.92);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      padding: clamp(1.5rem, 3vw, 2.5rem);
+      backdrop-filter: blur(12px);
+    }
+
+    .detail-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .detail-header h2 {
+      margin: 0;
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      letter-spacing: -0.01em;
+    }
+
+    .back-btn {
+      border: 0;
+      background: none;
+      color: var(--accent);
+      font-weight: 600;
+      padding: 0;
+      border-radius: 0;
+      cursor: pointer;
+      text-decoration: none;
+      transition: color 120ms ease;
+    }
+
+    .back-btn:hover,
+    .back-btn:focus-visible {
+      color: #1a5be9;
+      text-decoration: underline;
+    }
+
+    .embed-shell {
+      position: relative;
+      width: 100%;
+      padding-bottom: 65%;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      margin-bottom: 2rem;
+      border: 1px solid rgba(58, 122, 254, 0.08);
+      box-shadow: 0 18px 36px rgba(29, 35, 64, 0.1);
+    }
+
+    .embed-shell iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+
+    .detail-description {
+      line-height: 1.7;
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+
+    footer {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem 1rem 3rem;
+      color: #111111;
+      font-size: 0.9rem;
+    }
+
+    .footer-copy {
+      position: absolute;
+      left: 1.5rem;
+      color: rgba(17, 17, 17, 0.82);
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+    }
+
+    .footer-schedule {
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .site-floating {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      display: inline-flex;
+      align-items: center;
+      z-index: 100;
+    }
+
+    .site-footnote {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.55rem 0.85rem;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.9);
+      color: var(--muted);
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-decoration: none;
+      box-shadow: 0 10px 24px rgba(29, 35, 64, 0.08);
+      transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
+    }
+
+    .site-footnote img {
+      height: 18px;
+      width: auto;
+      display: block;
+    }
+
+    .site-footnote:hover,
+    .site-footnote:focus-visible {
+      transform: translateY(-3px);
+      background: rgba(255, 255, 255, 0.98);
+      box-shadow: 0 18px 32px rgba(29, 35, 64, 0.16);
+    }
+
+    @media (max-width: 600px) {
+      .button-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .detail-surface {
+        padding: 1.5rem;
+      }
+
+      .detail-header {
+        flex-direction: column-reverse;
+        align-items: flex-start;
+      }
+
+      .embed-shell {
+        padding-bottom: 75%;
+      }
+
+      .site-floating {
+        right: 1rem;
+        bottom: 1rem;
+        flex-direction: column-reverse;
+        align-items: flex-end;
+        gap: 0.6rem;
+      }
+
+      .contact-tooltip {
+        right: -0.35rem;
+      }
+
+      .footer-copy {
+        left: 1rem;
+        font-size: 0.75rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <span class="site-subtitle">BIPH Economics and Investment Club</span>
+    <h1 class="site-title">Economics Graph Collection</h1>
+    <p>View the original Desmos collection <a class="hero-link" href="https://www.desmos.com/gallery/11491f8f-6453-4890-a975-0fe5ae0092b5" target="_blank" rel="noopener">here</a>.</p>
+  </header>
+
+  <main>
+    <section id="list-view" aria-label="Graph gallery"></section>
+    <section id="detail-view" aria-label="Graph detail" hidden></section>
+  </main>
+
+    <footer>
+      <span class="footer-copy">© 2026 BIPH Economics and Investment Club</span>
+      <span class="footer-schedule">BIPH Economics and Investment Club | Tuesday | 16:30-17:30 | B401</span>
+    </footer>
+
+    <div class="site-floating">
+      <a class="site-footnote" href="https://github.com/ririririr/econgraphs.github.io" target="_blank" rel="noopener">
+        <img src="assets/images/github_logo.png" alt="GitHub logo">
+        <span>GitHub</span>
+      </a>
+    </div>
+
+  <template id="category-template">
+    <div class="category">
+      <h2></h2>
+      <div class="button-grid" role="list"></div>
+    </div>
+  </template>
+
+  <template id="button-template">
+    <button class="graph-btn" role="listitem"></button>
+  </template>
+
+  <template id="detail-template">
+    <div class="detail-surface">
+      <div class="detail-header">
+        <h2></h2>
+        <button type="button" class="back-btn">Back to gallery</button>
+      </div>
+      <div class="embed-shell">
+        <iframe allowfullscreen title="Interactive Economics Graph"></iframe>
+      </div>
+      <div class="detail-description"></div>
+    </div>
+  </template>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script>
+    const GRAPH_SHEET_PATH = 'assets/graphs/graphtable.xlsx';
+
+    const listViewEl = document.getElementById('list-view');
+    const detailViewEl = document.getElementById('detail-view');
+    const categoryTemplate = document.getElementById('category-template');
+    const buttonTemplate = document.getElementById('button-template');
+    const detailTemplate = document.getElementById('detail-template');
+
+    let graphs = [];
+    let dataReady = false;
+
+    function slugify(value) {
+      return value
+        .toString()
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+    }
+
+    function normalizeCategoryKey(value) {
+      const trimmed = (value || '').toString().trim();
+      return trimmed ? trimmed.toLowerCase() : 'uncategorized';
+    }
+
+    function formatCategoryLabel(value) {
+      const trimmed = (value || '').toString().trim();
+      if (!trimmed) {
+        return 'Uncategorized';
+      }
+      return trimmed
+        .split(/\s+/)
+        .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+        .join(' ');
+    }
+
+    function cleanDesmosUrl(url) {
+      let output = (url || '').toString().trim();
+      if (!output) {
+        return '';
+      }
+      if (output.endsWith('?embed')) {
+        output = output.slice(0, -6);
+      }
+      output = output.replace(/(&|\?)embed$/, '');
+      return output;
+    }
+
+    async function loadGraphData() {
+      const response = await fetch(GRAPH_SHEET_PATH);
+      if (!response.ok) {
+        throw new Error(`Failed to load graph table: ${response.status}`);
+      }
+      const buffer = await response.arrayBuffer();
+      const workbook = XLSX.read(buffer, { type: 'array' });
+      const sheetName = workbook.SheetNames[0];
+      if (!sheetName) {
+        return [];
+      }
+      const worksheet = workbook.Sheets[sheetName];
+      const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false });
+      if (!rows.length) {
+        return [];
+      }
+
+      const [, ...records] = rows;
+      const seenIds = new Set();
+      const result = [];
+
+      records.forEach((row, index) => {
+        if (!row || row.every((cell) => cell === undefined || cell === null || cell === '')) {
+          return;
+        }
+
+        const name = (row[0] || '').toString().trim();
+        const url = cleanDesmosUrl(row[1]);
+        if (!name || !url) {
+          return;
+        }
+
+        const categoryRaw = row[2];
+        const categoryKey = normalizeCategoryKey(categoryRaw);
+        const categoryLabel = formatCategoryLabel(categoryRaw);
+        const summary = (row[3] || 'To Be Written').toString().trim() || 'To Be Written';
+        const description = (row[4] || 'To Be Written').toString().trim() || 'To Be Written';
+
+        const baseId = slugify(name) || `graph-${index + 1}`;
+        let uniqueId = baseId;
+        let counter = 1;
+        while (seenIds.has(uniqueId)) {
+          uniqueId = `${baseId}-${++counter}`;
+        }
+        seenIds.add(uniqueId);
+
+        result.push({
+          id: uniqueId,
+          name,
+          url,
+          categoryKey,
+          categoryLabel,
+          summary,
+          description
+        });
+      });
+
+      return result;
+    }
+
+    function buildCategoryMap(data) {
+      const map = new Map();
+      data.forEach((graph) => {
+        if (!map.has(graph.categoryKey)) {
+          map.set(graph.categoryKey, {
+            label: graph.categoryLabel,
+            items: []
+          });
+        }
+        map.get(graph.categoryKey).items.push(graph);
+      });
+      return map;
+    }
+
+    function renderList() {
+      if (!graphs.length) {
+        listViewEl.innerHTML = '<p class="empty-state">No graphs available yet.</p>';
+        return;
+      }
+
+      listViewEl.innerHTML = '';
+      const collectionEl = document.createElement('div');
+      collectionEl.className = 'collection';
+
+      const categoryMap = buildCategoryMap(graphs);
+      const sortedCategories = Array.from(categoryMap.values()).sort((a, b) => a.label.localeCompare(b.label));
+
+      sortedCategories.forEach((category) => {
+        const categoryFragment = categoryTemplate.content.cloneNode(true);
+        const categoryEl = categoryFragment.querySelector('.category');
+        categoryEl.querySelector('h2').textContent = category.label;
+        const grid = categoryEl.querySelector('.button-grid');
+
+        category.items
+          .slice()
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .forEach((graph) => {
+            const buttonFragment = buttonTemplate.content.cloneNode(true);
+            const button = buttonFragment.querySelector('.graph-btn');
+            button.dataset.id = graph.id;
+            button.type = 'button';
+            button.innerHTML = `<span class="graph-title">${graph.name}</span><span class="graph-summary">${graph.summary}</span>`;
+            button.addEventListener('click', () => navigateToDetail(graph.id));
+            grid.append(button);
+          });
+
+        collectionEl.append(categoryFragment);
+      });
+
+      listViewEl.append(collectionEl);
+    }
+
+    function navigateToDetail(id) {
+      const target = graphs.find((graph) => graph.id === id);
+      if (!target) {
+        return;
+      }
+      showDetail(target);
+      window.history.replaceState(null, '', `#graph/${id}`);
+    }
+
+    function showDetail(graph) {
+      listViewEl.hidden = true;
+      detailViewEl.hidden = false;
+      detailViewEl.innerHTML = '';
+      const detailFragment = detailTemplate.content.cloneNode(true);
+      const container = detailFragment.querySelector('div');
+      container.querySelector('h2').textContent = graph.name;
+      container.querySelector('.detail-description').textContent = graph.description;
+      const iframe = container.querySelector('iframe');
+      iframe.src = `${graph.url}?embed`;
+      iframe.title = `${graph.name} Interactive Graph`;
+
+      const backButton = container.querySelector('.back-btn');
+      backButton.addEventListener('click', () => {
+        window.history.replaceState(null, '', '#');
+        showList();
+      });
+
+      detailViewEl.append(detailFragment);
+    }
+
+    function showList() {
+      detailViewEl.hidden = true;
+      listViewEl.hidden = false;
+      renderList();
+    }
+
+    function handleHashChange() {
+      if (!dataReady) {
+        return;
+      }
+      const hash = window.location.hash;
+      if (hash.startsWith('#graph/')) {
+        const id = hash.split('/')[1];
+        const target = graphs.find((graph) => graph.id === id);
+        if (target) {
+          showDetail(target);
+          return;
+        }
+      }
+      showList();
+    }
+
+    async function initializeGallery() {
+      listViewEl.innerHTML = '<p class="load-status">Loading graphs…</p>';
+      try {
+        graphs = await loadGraphData();
+        dataReady = true;
+        renderList();
+        handleHashChange();
+        window.addEventListener('hashchange', handleHashChange);
+      } catch (error) {
+        console.error('Failed to load graph table', error);
+        if (window.location.protocol === 'file:') {
+          listViewEl.innerHTML = '<p class="load-error">Browser security blocks reading Excel files when opened directly from your file system. Please run a local server (for example <code>python3 -m http.server</code>) or deploy the site to load the gallery.</p>';
+        } else {
+          listViewEl.innerHTML = '<p class="load-error">Unable to load the graph gallery right now.</p>';
+        }
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', initializeGallery);
+  </script>
+</body>
+</html>
