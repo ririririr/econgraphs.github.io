@@ -8,7 +8,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <!-- <link rel="stylesheet" href="index.css"> -->
   <link rel="icon" href="assets/favicon.ico">
 
   <style>
@@ -64,8 +63,6 @@ header {
     left: 3.5vw;
     position: absolute;
 }
-
-
 
 .site-subtitle {
     display: block;
@@ -150,17 +147,61 @@ main {
     cursor: pointer;
 }
 
+/* --- NEW BADGE STYLES START --- */
+.graph-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 100%;
+    gap: 0.5rem;
+}
+
 .graph-title {
     font-size: 1.1rem;
     font-weight: 600;
     letter-spacing: -0.01em;
+    text-align: left;
+    /* Ensure title wraps if badges take too much space */
+    flex: 1; 
 }
+
+.badge-container {
+    display: flex;
+    gap: 0.4rem;
+    flex-shrink: 0; /* Prevents badges from squishing */
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    max-width: 40%;
+}
+
+.graph-badge {
+    /* Default Style (if no color provided) */
+    background-color: var(--accent-soft);
+    color: var(--accent);
+    
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0.25rem 0.55rem;
+    border-radius: 99px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+    height: fit-content;
+}
+
+/* When a custom color is set via JS, we ensure text is white */
+.graph-badge.has-color {
+    color: #ffffff;
+    /* background-color is set via inline style */
+}
+/* --- NEW BADGE STYLES END --- */
 
 .graph-summary {
     font-size: 0.9rem;
     color: var(--muted);
     line-height: 1.5;
     font-weight: 500;
+    text-align: left;
 }
 
 .graph-btn:hover,
@@ -341,10 +382,6 @@ footer {
         gap: 0.6rem;
     }
 
-    .contact-tooltip {
-        right: -0.35rem;
-    }
-
     .footer-copy {
         left: 1rem;
         font-size: 0.75rem;
@@ -352,13 +389,11 @@ footer {
 }
   </style>
 
-  
   <title>Economics Graph Gallery</title>
 </head>
 <body>
   <header>
     <div id="header-section">
-      <!-- <a href="https://example.com"> -->
       <a>
         <img id="econgraphs-logo" alt="ECONGRAPHS Logo" src="assets/images/econgraphs-logo.png">
       </a>
@@ -368,7 +403,6 @@ footer {
       </a>
       
       <span class="site-subtitle">BIPH Economics and Investment Club</span>
-      
     </div>
     
     <h1 class="site-title">Economics Graph Collection</h1>
@@ -426,8 +460,6 @@ footer {
 <script defer src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <script defer>
-
-    
 const GRAPH_SHEET_PATH = "assets/graphs/graphtable.xlsx";
 
 const listViewEl = document.getElementById("list-view");
@@ -455,9 +487,7 @@ function normalizeCategoryKey(value) {
 
 function formatCategoryLabel(value) {
     const trimmed = (value || "").toString().trim();
-    if (!trimmed) {
-        return "Uncategorized";
-    }
+    if (!trimmed) return "Uncategorized";
     return trimmed
         .split(/\s+/)
         .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
@@ -466,61 +496,66 @@ function formatCategoryLabel(value) {
 
 function cleanDesmosUrl(url) {
     let output = (url || "").toString().trim();
-    if (!output) {
-        return "";
-    }
-    if (output.endsWith("?embed")) {
-        output = output.slice(0, -6);
-    }
+    if (!output) return "";
+    if (output.endsWith("?embed")) output = output.slice(0, -6);
     output = output.replace(/(&|\?)embed$/, "");
     return output;
 }
 
+// Helper to safely get value from row using column index
+function getCell(row, index) {
+    return (index !== undefined && row[index]) ? row[index].toString().trim() : "";
+}
+
 async function loadGraphData() {
     const response = await fetch(GRAPH_SHEET_PATH);
-    if (!response.ok) {
-        throw new Error(`Failed to load graph table: ${response.status}`);
-    }
+    if (!response.ok) throw new Error(`Failed to load graph table: ${response.status}`);
+    
     const buffer = await response.arrayBuffer();
     const workbook = XLSX.read(buffer, { type: "array" });
     const sheetName = workbook.SheetNames[0];
-    if (!sheetName) {
-        return [];
-    }
+    if (!sheetName) return [];
+    
     const worksheet = workbook.Sheets[sheetName];
-    const rows = XLSX.utils.sheet_to_json(worksheet, {
-        header: 1,
-        blankrows: false,
+    const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false });
+    if (!rows.length) return [];
+
+    // Map headers to find Badge columns dynamically
+    const headers = rows[0];
+    const headerMap = {};
+    headers.forEach((h, i) => {
+        if(h) headerMap[h.toString().trim()] = i;
     });
-    if (!rows.length) {
-        return [];
-    }
 
     const [, ...records] = rows;
     const seenIds = new Set();
     const result = [];
 
     records.forEach((row, index) => {
-        if (
-            !row ||
-            row.every((cell) => cell === undefined || cell === null || cell === "")
-        ) {
-            return;
-        }
+        if (!row || row.every((cell) => cell === undefined || cell === null || cell === "")) return;
 
         const name = (row[0] || "").toString().trim();
         const url = cleanDesmosUrl(row[1]);
-        if (!name || !url) {
-            return;
-        }
+        if (!name || !url) return;
 
         const categoryRaw = row[2];
         const categoryKey = normalizeCategoryKey(categoryRaw);
         const categoryLabel = formatCategoryLabel(categoryRaw);
-        const summary =
-            (row[3] || "To Be Written").toString().trim() || "To Be Written";
-        const description =
-            (row[4] || "To Be Written").toString().trim() || "To Be Written";
+        const summary = (row[3] || "To Be Written").toString().trim() || "To Be Written";
+        const description = (row[4] || "To Be Written").toString().trim() || "To Be Written";
+        
+        // Extract up to 2 badges
+        const badges = [];
+        
+        // Check Badge 1
+        const b1Text = getCell(row, headerMap["Badge 1 Text"]);
+        const b1Color = getCell(row, headerMap["Badge 1 Color"]);
+        if (b1Text) badges.push({ text: b1Text, color: b1Color });
+
+        // Check Badge 2
+        const b2Text = getCell(row, headerMap["Badge 2 Text"]);
+        const b2Color = getCell(row, headerMap["Badge 2 Color"]);
+        if (b2Text) badges.push({ text: b2Text, color: b2Color });
 
         const baseId = slugify(name) || `graph-${index + 1}`;
         let uniqueId = baseId;
@@ -538,6 +573,7 @@ async function loadGraphData() {
             categoryLabel,
             summary,
             description,
+            badges, // Array of {text, color}
         });
     });
 
@@ -565,8 +601,7 @@ function buildCategoryMap(data) {
 
 function renderList() {
     if (!graphs.length) {
-        listViewEl.innerHTML =
-            '<p class="empty-state">No graphs available yet.</p>';
+        listViewEl.innerHTML = '<p class="empty-state">No graphs available yet.</p>';
         return;
     }
 
@@ -576,7 +611,6 @@ function renderList() {
 
     const { map: categoryMap, orderTracker } = buildCategoryMap(graphs);
     
-    // Use the original order from the Excel file
     orderTracker.forEach((categoryKey) => {
         const category = categoryMap.get(categoryKey);
         const categoryFragment = categoryTemplate.content.cloneNode(true);
@@ -592,7 +626,29 @@ function renderList() {
                 const button = buttonFragment.querySelector(".graph-btn");
                 button.dataset.id = graph.id;
                 button.type = "button";
-                button.innerHTML = `<span class="graph-title">${graph.name}</span><span class="graph-summary">${graph.summary}</span>`;
+                
+                // Generate Badge HTML
+                let badgesHtml = '';
+                if (graph.badges && graph.badges.length > 0) {
+                    badgesHtml = `<div class="badge-container">` + 
+                        graph.badges.map(b => {
+                            // If color is provided, use inline style + 'has-color' class
+                            // If not, use default class
+                            const styleAttr = b.color ? `style="background-color: ${b.color}"` : '';
+                            const classAttr = b.color ? 'graph-badge has-color' : 'graph-badge';
+                            return `<span class="${classAttr}" ${styleAttr}>${b.text}</span>`;
+                        }).join('') + 
+                    `</div>`;
+                }
+
+                button.innerHTML = `
+                    <div class="graph-header">
+                        <span class="graph-title">${graph.name}</span>
+                        ${badgesHtml}
+                    </div>
+                    <span class="graph-summary">${graph.summary}</span>
+                `;
+                
                 button.addEventListener("click", () => navigateToDetail(graph.id));
                 grid.append(button);
             });
@@ -605,9 +661,7 @@ function renderList() {
 
 function navigateToDetail(id) {
     const target = graphs.find((graph) => graph.id === id);
-    if (!target) {
-        return;
-    }
+    if (!target) return;
     showDetail(target);
     window.history.replaceState(null, "", `#graph/${id}`);
 }
@@ -619,8 +673,7 @@ function showDetail(graph) {
     const detailFragment = detailTemplate.content.cloneNode(true);
     const container = detailFragment.querySelector("div");
     container.querySelector("h2").textContent = graph.name;
-    container.querySelector(".detail-description").textContent =
-        graph.description;
+    container.querySelector(".detail-description").textContent = graph.description;
     const iframe = container.querySelector("iframe");
     iframe.src = `${graph.url}?embed`;
     iframe.title = `${graph.name} Interactive Graph`;
@@ -641,9 +694,7 @@ function showList() {
 }
 
 function handleHashChange() {
-    if (!dataReady) {
-        return;
-    }
+    if (!dataReady) return;
     const hash = window.location.hash;
     if (hash.startsWith("#graph/")) {
         const id = hash.split("/")[1];
@@ -677,8 +728,6 @@ async function initializeGallery() {
 }
 
 document.addEventListener("DOMContentLoaded", initializeGallery);
-
-  </script>
-
+</script>
 </body>
 </html>
